@@ -1,10 +1,8 @@
-﻿using Nest;
-
-namespace ElasticsearchSample.API.Models;
+﻿namespace ElasticsearchSample.API.Models;
 
 public class Product
 {
-    [PropertyName("_id")]
+    
     public string Id { get; set; }
     public string Name { get; set; }
     public decimal Price { get; set; }

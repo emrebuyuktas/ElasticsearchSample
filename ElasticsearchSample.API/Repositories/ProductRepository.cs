@@ -1,26 +1,28 @@
-﻿using ElasticsearchSample.API.Dtos;
+﻿using Elastic.Clients.Elasticsearch;
+using ElasticsearchSample.API.Dtos;
 using ElasticsearchSample.API.Models;
-using Nest;
 using System.Collections.Immutable;
 
 namespace ElasticsearchSample.API.Repositories;
 
 public class ProductRepository
 {
-    private readonly ElasticClient _client;
-    private const string _indexName = "products";
+    private readonly ElasticsearchClient _client;
 
-    public ProductRepository(ElasticClient client)
+    public ProductRepository(ElasticsearchClient client)
     {
         _client = client;
     }
+
+    private const string _indexName = "products";
 
     public async Task<Product> SaveAsync(Product product)
     {
 
         product.Created = DateTime.Now;
-        var response = await _client.IndexAsync(product, x => x.Index(_indexName).Id(Guid.NewGuid().ToString()));
-        if (!response.IsValid) return null;
+        //var response = await _client.IndexAsync(product, x => x.Index(_indexName).Id(Guid.NewGuid().ToString()));
+        var response = await _client.IndexAsync(product, x => x.Index(_indexName));
+        if (!response.IsValidResponse) return null;
 
 
         product.Id = response.Id;
@@ -43,7 +45,7 @@ public class ProductRepository
     public async Task<Product> GetByIdAsync(string id)
     {
         var result = await _client.GetAsync<Product>(id, x => x.Index(_indexName));
-        if (!result.IsValid) return null;
+        if (!result.IsValidResponse) return null;
 
         result.Source.Id = result.Id;
 
@@ -52,8 +54,9 @@ public class ProductRepository
 
     public async Task<bool> UpdateAsync(string id,Product product)
     {
-        var response = await _client.UpdateAsync<Product>(id, x => x.Index(_indexName).Doc(product));
-        return response.IsValid;
+        var response = await _client.UpdateAsync<Product, Product>(_indexName,id,x=>
+        x.Doc(product));
+        return response.IsValidResponse;
     }
 
 

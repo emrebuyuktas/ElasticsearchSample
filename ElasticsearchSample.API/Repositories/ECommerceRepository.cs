@@ -1,5 +1,6 @@
 ﻿using Elastic.Clients.Elasticsearch;
 using Elastic.Clients.Elasticsearch.QueryDsl;
+using ElasticsearchSample.API.Dtos;
 using ElasticsearchSample.API.Models.ECommerceModels;
 using System.Collections.Immutable;
 
@@ -22,6 +23,9 @@ public class ECommerceRepository
 
         //second way
         var result = await _client.SearchAsync<ECommerce>(s => s.Index(_indexName).Query(q => q.Term(t => t.CustomerFirstName.Suffix("keyword"), customerFirstName)));
+
+        //third way
+        //var result = await _client.SearchAsync<ECommerce>(s => s.Index(_indexName).Query(q => q.Term(t => t.Field(f=>f.CustomerFirstName).Value(customerFirstName))));
 
         foreach (var hit in result.Hits) hit.Source.Id = hit.Id;
 
@@ -204,4 +208,47 @@ public class ECommerceRepository
 
         return result.Documents.ToImmutableList();
     }
+
+    #region search
+    public async Task<IImmutableList<ECommerce>> SearhAsync(EcommerceSearchDto searchDto,int page,int size)
+    {
+        List<Action<QueryDescriptor<ECommerce>>> queryList = new List<Action<QueryDescriptor<ECommerce>>>();
+
+        if(!string.IsNullOrEmpty(searchDto.Category))
+        {
+            queryList.Add((q)=>q.Match(m=>m.Field(f=>f.Category).Query(searchDto.Category)));
+            //Action<QueryDescriptor<ECommerce>> categoryQuery =
+            //    (q)=>q.Match(m=>m.Field(f=>f.Category).Query(searchDto.Category));
+        }
+
+        if (!string.IsNullOrEmpty(searchDto.CustomerFullName))
+        {
+            queryList.Add((q) => q.Match(m => m.Field(f => f.CustomerFullName).Query(searchDto.CustomerFullName)));
+        }
+
+        if (searchDto.OrderDateStart.HasValue)
+        {
+            queryList.Add((q)=>q.Range(r=>r.DateRange(dr=>dr.Field(f=>f.OrderDate).Gte(searchDto.OrderDateStart))));
+        }
+
+        if (searchDto.OrderDateEnd.HasValue)
+        {
+            queryList.Add((q) => q.Range(r => r.DateRange(dr => dr.Field(f => f.OrderDate).Lte(searchDto.OrderDateEnd))));
+        }
+
+        if (!string.IsNullOrEmpty(searchDto.Gender))
+        {
+            queryList.Add((q) => q.Term(t => t.Field(f => f.Gender).Value(searchDto.Gender)));
+        }
+
+        var pageFrom = (page - 1) * size;
+
+        var result = await _client.SearchAsync<ECommerce>(s => s.Index(_indexName).From(pageFrom).Size(size).Query(q => q.Bool(b => b.Must(queryList.ToArray()))));
+
+        foreach (var hit in result.Hits) hit.Source.Id = hit.Id;
+
+        return result.Documents.ToImmutableList();
+
+    }
+    #endregion
 }

@@ -22,6 +22,8 @@ public class ECommerce
     public Product[] Products { get; set; }
     [JsonPropertyName("taxful_total_price")]
     public double TaxfulTotalPrice { get; set; }
+    [JsonPropertyName("customer_gender")]
+    public string Gender { get; set; }=null!;
 }
 
 public class Product

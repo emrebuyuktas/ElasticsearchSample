@@ -1,4 +1,5 @@
-﻿using ElasticsearchSample.API.Repositories;
+﻿using ElasticsearchSample.API.Dtos;
+using ElasticsearchSample.API.Repositories;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ElasticsearchSample.API.Controllers;
@@ -122,6 +123,14 @@ public class EcommercesController : ControllerBase
     public async Task<IActionResult> MultiMatchQuery(string text)
     {
         var result = await _eCommerceRepository.MultiMatchQueryAsync(text);
+
+        return Ok(result);
+    }
+
+    [HttpPost("search")]
+    public async Task<IActionResult> SearchAsync([FromBody]EcommerceSearchDto searchDto, int page, int size)
+    {
+        var result = await _eCommerceRepository.SearhAsync(searchDto,page,size);
 
         return Ok(result);
     }

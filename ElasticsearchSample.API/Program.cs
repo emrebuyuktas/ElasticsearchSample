@@ -16,6 +16,8 @@ builder.Services.AddScoped<ProductService>();
 builder.Services.AddElasticsearch(builder.Configuration);
 builder.Services.AddScoped<ProductRepository>();
 builder.Services.AddScoped<ECommerceRepository>();
+builder.Services.AddScoped<BlogService>();
+builder.Services.AddScoped<BlogRepository>();
 #endregion
 
 var app = builder.Build();
